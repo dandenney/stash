@@ -42,9 +42,24 @@ export async function POST(req: NextRequest) {
 
   if (!url) return NextResponse.json({ error: 'url is required' }, { status: 400 })
 
-  const { title, description } = await scrapeMetadata(url)
+  let title = url
+  let description: string | null = null
+  try {
+    const meta = await scrapeMetadata(url)
+    title = meta.title
+    description = meta.description
+  } catch (e) {
+    console.error('scrapeMetadata failed:', e)
+  }
+
   const type = isVideoUrl(url) ? 'watched' : 'read'
-  const tags = await generateTags(title, description)
+
+  let tags: string[] = []
+  try {
+    tags = await generateTags(title, description)
+  } catch (e) {
+    console.error('generateTags failed:', e)
+  }
 
   const { data, error } = await supabase
     .from('links')
