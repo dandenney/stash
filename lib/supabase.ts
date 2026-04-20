@@ -38,7 +38,8 @@ export interface Link {
   description: string | null
   notes: string | null
   tags: string[]
-  type: 'read' | 'watched'
+  media_type: 'article' | 'video'
+  status: 'pending' | 'read' | 'watched'
   is_private: boolean
   created_at: string
 }

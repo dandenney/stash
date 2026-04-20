@@ -2,6 +2,7 @@ import { createSessionClient, supabase } from '@/lib/supabase'
 import { redirect } from 'next/navigation'
 import { signOut } from '@/app/actions'
 import TokenManager from './TokenManager'
+import LinkQueue from './LinkQueue'
 
 export default async function DashboardPage() {
   const client = await createSessionClient()
@@ -9,13 +10,20 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/login')
 
-  const [{ data: links }, { data: tokens }] = await Promise.all([
+  const [{ data: pending }, { data: done }, { data: tokens }] = await Promise.all([
     supabase
       .from('links')
       .select('*')
       .eq('user_id', user.id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('links')
+      .select('*')
+      .eq('user_id', user.id)
+      .neq('status', 'pending')
       .order('created_at', { ascending: false })
-      .limit(50),
+      .limit(20),
     supabase
       .from('api_tokens')
       .select('id, label, token, created_at')
@@ -40,20 +48,20 @@ export default async function DashboardPage() {
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-10">
         <section>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-            API Tokens
+            Queue ({pending?.length ?? 0})
           </h2>
-          <TokenManager tokens={tokens ?? []} userId={user.id} />
+          <LinkQueue links={pending ?? []} />
         </section>
 
         <section>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-            Recent Links ({links?.length ?? 0})
+            Done
           </h2>
-          {links?.length === 0 ? (
-            <p className="text-sm text-gray-400">No links yet. Drop one in Discord to get started.</p>
+          {done?.length === 0 ? (
+            <p className="text-sm text-gray-400">Nothing marked done yet.</p>
           ) : (
             <ul className="space-y-2">
-              {links?.map((link) => (
+              {done?.map((link) => (
                 <li key={link.id} className="bg-white border border-gray-200 rounded-xl px-4 py-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -65,27 +73,28 @@ export default async function DashboardPage() {
                       >
                         {link.title}
                       </a>
-                      {link.notes && (
-                        <p className="text-xs text-gray-500 mt-0.5">{link.notes}</p>
-                      )}
+                      {link.notes && <p className="text-xs text-gray-500 mt-0.5">{link.notes}</p>}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs text-gray-400 capitalize">{link.type}</span>
-                      {link.tags?.length > 0 && (
-                        <div className="flex gap-1">
-                          {link.tags.map((tag: string) => (
-                            <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      <span className="text-xs text-gray-400 capitalize">{link.status}</span>
+                      {link.tags?.map((tag: string) => (
+                        <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                          {tag}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 </li>
               ))}
             </ul>
           )}
+        </section>
+
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+            API Tokens
+          </h2>
+          <TokenManager tokens={tokens ?? []} userId={user.id} />
         </section>
       </div>
     </main>

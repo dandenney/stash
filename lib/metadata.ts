@@ -2,6 +2,17 @@ import * as cheerio from 'cheerio'
 
 const VIDEO_DOMAINS = ['youtube.com', 'youtu.be', 'vimeo.com', 'loom.com', 'wistia.com']
 
+export function getMediaType(url: string): 'article' | 'video' {
+  return VIDEO_DOMAINS.some((d) => {
+    try {
+      const hostname = new URL(url).hostname.replace('www.', '')
+      return hostname === d || hostname.endsWith(`.${d}`)
+    } catch {
+      return false
+    }
+  }) ? 'video' : 'article'
+}
+
 export function isVideoUrl(url: string): boolean {
   try {
     const hostname = new URL(url).hostname.replace('www.', '')

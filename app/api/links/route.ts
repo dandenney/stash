@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { scrapeMetadata, isVideoUrl } from '@/lib/metadata'
+import { scrapeMetadata, getMediaType } from '@/lib/metadata'
 import { generateTags } from '@/lib/tagging'
 
 export async function GET(req: NextRequest) {
@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
     .select('*')
     .eq('user_id', userId)
     .eq('is_private', false)
+    .neq('status', 'pending')
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
     console.error('scrapeMetadata failed:', e)
   }
 
-  const type = isVideoUrl(url) ? 'watched' : 'read'
+  const media_type = getMediaType(url)
 
   let tags: string[] = []
   try {
@@ -70,7 +71,8 @@ export async function POST(req: NextRequest) {
       description,
       notes: notes ?? null,
       tags,
-      type,
+      media_type,
+      status: 'pending',
       is_private: is_private ?? false,
     })
     .select()
