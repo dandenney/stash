@@ -17,8 +17,9 @@ Description: ${description ?? 'none'}`,
     ],
   })
 
+  const raw = message.content[0].type === 'text' ? message.content[0].text : '[]'
+  const text = raw.replace(/```(?:json)?\n?/g, '').trim()
   try {
-    const text = message.content[0].type === 'text' ? message.content[0].text : '[]'
     return JSON.parse(text)
   } catch {
     return []
