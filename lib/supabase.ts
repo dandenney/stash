@@ -40,7 +40,7 @@ export interface Link {
 
 export interface ApiToken {
   id: string
-  user_id: string
+  user_id?: string
   token: string
   label: string
   created_at: string
