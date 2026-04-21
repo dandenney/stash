@@ -24,20 +24,22 @@ export default function LinkQueue({ links: initial }: { links: Link[] }) {
     <ul className="space-y-2">
       {links.map((link) => (
         <li key={link.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-          {link.image && (
-            <img
-              src={link.image}
-              alt=""
-              className="w-full h-36 object-cover"
-            />
-          )}
-          <div className="flex items-start justify-between gap-4 px-4 py-3">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 p-3">
+            {link.image ? (
+              <img
+                src={link.image}
+                alt=""
+                className="w-20 h-16 object-cover rounded-lg shrink-0"
+              />
+            ) : (
+              <div className="w-20 h-16 bg-gray-100 rounded-lg shrink-0" />
+            )}
             <div className="min-w-0">
               <a
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm font-medium text-gray-900 hover:underline truncate block"
+                className="text-sm font-medium text-gray-900 hover:underline line-clamp-2 block"
               >
                 {link.title}
               </a>
