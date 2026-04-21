@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stash</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <span class="logo">stash</span>
+      <button id="settings-btn" title="Settings" aria-label="Settings">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" fill="currentColor"/>
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M6.94 1.22a1.5 1.5 0 0 1 2.12 0l.56.56c.17.17.4.26.63.25l.79-.03a1.5 1.5 0 0 1 1.5 1.5v.79c0 .24.09.46.26.63l.56.56a1.5 1.5 0 0 1 0 2.12l-.56.56a.88.88 0 0 0-.26.63v.79a1.5 1.5 0 0 1-1.5 1.5l-.79-.03a.88.88 0 0 0-.63.25l-.56.56a1.5 1.5 0 0 1-2.12 0l-.56-.56a.88.88 0 0 0-.63-.25l-.79.03a1.5 1.5 0 0 1-1.5-1.5v-.79a.88.88 0 0 0-.26-.63l-.56-.56a1.5 1.5 0 0 1 0-2.12l.56-.56c.17-.17.26-.4.26-.63v-.79a1.5 1.5 0 0 1 1.5-1.5l.79.03c.24.01.46-.08.63-.25l.56-.56ZM8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z" fill="currentColor"/>
+        </svg>
+      </button>
+    </header>
+
+    <div id="main-view">
+      <div id="not-configured" class="hidden">
+        <p>Configure your API URL and token in settings first.</p>
+        <button id="go-settings-btn" class="btn btn-primary">Open Settings</button>
+      </div>
+
+      <form id="stash-form" class="hidden">
+        <div class="field">
+          <label for="url">URL</label>
+          <input type="url" id="url" name="url" readonly />
+        </div>
+        <div class="field">
+          <label for="notes">Notes <span class="optional">(optional)</span></label>
+          <textarea id="notes" name="notes" rows="3" placeholder="Add a note…"></textarea>
+        </div>
+        <div class="field checkbox-field">
+          <label>
+            <input type="checkbox" id="is-private" name="is_private" />
+            Private
+          </label>
+        </div>
+        <button type="submit" id="submit-btn" class="btn btn-primary">Save to Stash</button>
+      </form>
+
+      <div id="success" class="hidden">
+        <div class="success-icon">✓</div>
+        <p>Saved to your queue!</p>
+      </div>
+
+      <div id="error-msg" class="hidden error"></div>
+    </div>
+
+    <div id="settings-view" class="hidden">
+      <h2>Settings</h2>
+      <form id="settings-form">
+        <div class="field">
+          <label for="api-url">API Base URL</label>
+          <input type="url" id="api-url" name="api_url" placeholder="https://yourdomain.com" />
+        </div>
+        <div class="field">
+          <label for="api-token">API Token</label>
+          <input type="password" id="api-token" name="api_token" placeholder="Paste token from dashboard" />
+        </div>
+        <div class="settings-actions">
+          <button type="button" id="back-btn" class="btn btn-secondary">Back</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+      <div id="settings-saved" class="hidden success-msg">Settings saved.</div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

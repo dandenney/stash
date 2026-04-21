@@ -3,6 +3,16 @@ import { supabase } from '@/lib/supabase'
 import { scrapeMetadata, getMediaType } from '@/lib/metadata'
 import { generateTags } from '@/lib/tagging'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, x-api-key',
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders })
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const userId = searchParams.get('user_id')
@@ -19,9 +29,9 @@ export async function GET(req: NextRequest) {
     .neq('status', 'pending')
     .order('created_at', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: corsHeaders })
 
-  return NextResponse.json(data)
+  return NextResponse.json(data, { headers: corsHeaders })
 }
 
 export async function POST(req: NextRequest) {
@@ -35,7 +45,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (tokenError || !tokenRow) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
   }
 
   const body = await req.json()
@@ -78,7 +88,7 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: corsHeaders })
 
-  return NextResponse.json(data, { status: 201 })
+  return NextResponse.json(data, { status: 201, headers: corsHeaders })
 }
