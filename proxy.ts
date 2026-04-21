@@ -1,21 +1,36 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import { NextRequest, NextResponse } from 'next/server'
 
-export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  const sessionCookie =
-    request.cookies.get('sb-access-token') ??
-    request.cookies.get(
-      `sb-${process.env.SUPABASE_URL?.match(/\/\/([^.]+)/)?.[1]}-auth-token`
-    )
+export async function proxy(req: NextRequest) {
+  const res = NextResponse.next()
 
-  if (pathname.startsWith('/dashboard') && !sessionCookie) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  const supabase = createServerClient(
+    process.env.SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => req.cookies.getAll(),
+        setAll: (cookiesToSet) => {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            req.cookies.set(name, value)
+            res.cookies.set(name, value, options)
+          })
+        },
+      },
+    }
+  )
+
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (req.nextUrl.pathname.startsWith('/dashboard') && !user) {
+    return NextResponse.redirect(new URL('/login', req.url))
   }
 
-  return NextResponse.next()
+  return res
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }
