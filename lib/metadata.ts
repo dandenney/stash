@@ -42,5 +42,25 @@ export async function scrapeMetadata(url: string) {
     $('meta[name="description"]').attr('content') ||
     null
 
-  return { title: title.trim(), description: description?.trim() ?? null }
+  const image =
+    $('meta[property="og:image"]').attr('content') ||
+    $('meta[name="twitter:image"]').attr('content') ||
+    null
+
+  const site_name =
+    $('meta[property="og:site_name"]').attr('content') ||
+    null
+
+  const author =
+    $('meta[name="author"]').attr('content') ||
+    $('meta[property="article:author"]').attr('content') ||
+    null
+
+  return {
+    title: title.trim(),
+    description: description?.trim() ?? null,
+    image: image?.trim() ?? null,
+    site_name: site_name?.trim() ?? null,
+    author: author?.trim() ?? null,
+  }
 }

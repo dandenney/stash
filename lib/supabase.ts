@@ -36,6 +36,9 @@ export interface Link {
   url: string
   title: string
   description: string | null
+  image: string | null
+  site_name: string | null
+  author: string | null
   notes: string | null
   tags: string[]
   media_type: 'article' | 'video'

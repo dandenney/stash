@@ -23,8 +23,15 @@ export default function LinkQueue({ links: initial }: { links: Link[] }) {
   return (
     <ul className="space-y-2">
       {links.map((link) => (
-        <li key={link.id} className="bg-white border border-gray-200 rounded-xl px-4 py-3">
-          <div className="flex items-start justify-between gap-4">
+        <li key={link.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          {link.image && (
+            <img
+              src={link.image}
+              alt=""
+              className="w-full h-36 object-cover"
+            />
+          )}
+          <div className="flex items-start justify-between gap-4 px-4 py-3">
             <div className="min-w-0">
               <a
                 href={link.url}
@@ -34,6 +41,11 @@ export default function LinkQueue({ links: initial }: { links: Link[] }) {
               >
                 {link.title}
               </a>
+              {(link.site_name || link.author) && (
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {[link.site_name, link.author].filter(Boolean).join(' · ')}
+                </p>
+              )}
               {link.notes && <p className="text-xs text-gray-500 mt-0.5">{link.notes}</p>}
               <div className="flex gap-1 mt-1.5">
                 {link.tags?.map((tag) => (

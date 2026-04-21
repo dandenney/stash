@@ -55,10 +55,16 @@ export async function POST(req: NextRequest) {
 
   let title = url
   let description: string | null = null
+  let image: string | null = null
+  let site_name: string | null = null
+  let author: string | null = null
   try {
     const meta = await scrapeMetadata(url)
     title = meta.title
     description = meta.description
+    image = meta.image
+    site_name = meta.site_name
+    author = meta.author
   } catch (e) {
     console.error('scrapeMetadata failed:', e)
   }
@@ -79,6 +85,9 @@ export async function POST(req: NextRequest) {
       url,
       title,
       description,
+      image,
+      site_name,
+      author,
       notes: notes ?? null,
       tags,
       media_type,
