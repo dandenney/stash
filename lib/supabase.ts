@@ -42,8 +42,9 @@ export interface Link {
   notes: string | null
   tags: string[]
   media_type: 'article' | 'video'
-  status: 'pending' | 'read' | 'watched'
-  is_private: boolean
+  status: 'score' | 'stashed'
+  is_shared: boolean
+  shared_at: string | null
   created_at: string
 }
 

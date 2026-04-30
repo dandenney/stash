@@ -16,18 +16,32 @@ export async function OPTIONS() {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const userId = searchParams.get('user_id')
+  const monthParam = searchParams.get('month')
 
   if (!userId) {
-    return NextResponse.json({ error: 'user_id is required' }, { status: 400 })
+    return NextResponse.json({ error: 'user_id is required' }, { status: 400, headers: corsHeaders })
   }
+
+  if (monthParam && !/^\d{4}-\d{2}$/.test(monthParam)) {
+    return NextResponse.json({ error: 'Invalid month format. Use YYYY-MM' }, { status: 400, headers: corsHeaders })
+  }
+
+  const month = monthParam ?? new Date().toISOString().slice(0, 7)
+  const [year, mon] = month.split('-').map(Number)
+  const nextYear = mon === 12 ? year + 1 : year
+  const nextMon = mon === 12 ? 1 : mon + 1
+  const rangeStart = `${month}-01T00:00:00.000Z`
+  const rangeEnd = `${nextYear}-${String(nextMon).padStart(2, '0')}-01T00:00:00.000Z`
 
   const { data, error } = await supabase
     .from('links')
     .select('*')
     .eq('user_id', userId)
-    .eq('is_private', false)
-    .neq('status', 'pending')
-    .order('created_at', { ascending: false })
+    .eq('is_shared', true)
+    .eq('status', 'stashed')
+    .gte('shared_at', rangeStart)
+    .lt('shared_at', rangeEnd)
+    .order('shared_at', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: corsHeaders })
 
@@ -49,7 +63,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { url, notes, is_private } = body
+  const { url, notes } = body
 
   if (!url) return NextResponse.json({ error: 'url is required' }, { status: 400 })
 
@@ -91,8 +105,8 @@ export async function POST(req: NextRequest) {
       notes: notes ?? null,
       tags,
       media_type,
-      status: 'pending',
-      is_private: is_private ?? false,
+      status: 'score',
+      is_shared: false,
     })
     .select()
     .single()

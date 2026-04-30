@@ -1,9 +1,18 @@
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const { error } = await searchParams
+
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-sm p-8 bg-white rounded-2xl shadow-sm border border-gray-200">
         <h1 className="text-2xl font-semibold text-gray-900 mb-1">stash</h1>
         <p className="text-sm text-gray-500 mb-6">Sign in to continue</p>
+        {error === 'not_allowed' && (
+          <p className="text-sm text-red-500 mb-4">This account isn&apos;t on the list.</p>
+        )}
 
         <a
           href="/auth/google"

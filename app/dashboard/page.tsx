@@ -10,18 +10,18 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/login')
 
-  const [{ data: pending }, { data: done }, { data: tokens }] = await Promise.all([
+  const [{ data: score }, { data: stashed }, { data: tokens }] = await Promise.all([
     supabase
       .from('links')
       .select('*')
       .eq('user_id', user.id)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false }),
+      .eq('status', 'score')
+      .order('created_at', { ascending: true }),
     supabase
       .from('links')
       .select('*')
       .eq('user_id', user.id)
-      .neq('status', 'pending')
+      .eq('status', 'stashed')
       .order('created_at', { ascending: false })
       .limit(20),
     supabase
@@ -48,20 +48,20 @@ export default async function DashboardPage() {
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-10">
         <section>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-            Queue ({pending?.length ?? 0})
+            The Score ({score?.length ?? 0})
           </h2>
-          <LinkQueue links={pending ?? []} />
+          <LinkQueue links={score ?? []} />
         </section>
 
         <section>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-            Done
+            Stashed
           </h2>
-          {done?.length === 0 ? (
-            <p className="text-sm text-gray-400">Nothing marked done yet.</p>
+          {stashed?.length === 0 ? (
+            <p className="text-sm text-gray-400">Nothing stashed yet.</p>
           ) : (
             <ul className="space-y-2">
-              {done?.map((link) => (
+              {stashed?.map((link) => (
                 <li key={link.id} className="bg-white border border-gray-200 rounded-xl px-4 py-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -76,7 +76,9 @@ export default async function DashboardPage() {
                       {link.notes && <p className="text-xs text-gray-500 mt-0.5">{link.notes}</p>}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs text-gray-400 capitalize">{link.status}</span>
+                      {link.is_shared && (
+                        <span className="text-xs text-green-600 font-medium">Shared</span>
+                      )}
                       {link.tags?.map((tag: string) => (
                         <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
                           {tag}

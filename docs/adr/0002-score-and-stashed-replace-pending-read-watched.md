@@ -1,0 +1,3 @@
+# Use score and stashed instead of pending/read/watched
+
+The link lifecycle uses two states — `score` (saved, awaiting triage) and `stashed` (kept) — rather than the original three (`pending`, `read`, `watched`). We deliberately do not track whether a link was consumed. The act of moving a link out of The Score is the meaningful action; whether the owner read it, skimmed it, or just decided to keep it is irrelevant to the system. The `read`/`watched` distinction was also redundant with the existing `media_type` field. The domain language (Score → Stashed) comes from the app's jewel-thief/stash metaphor and is reflected throughout the UI.
