@@ -12,6 +12,17 @@ function TriageCard({
   onRemove: (id: string) => void
 }) {
   const [link, setLink] = useState(initial)
+  const [scraping, setScraping] = useState(false)
+
+  async function rescrape() {
+    setScraping(true)
+    const res = await fetch(`/api/links/${link.id}/rescrape`, { method: 'POST' })
+    if (res.ok) {
+      const updated: Link = await res.json()
+      setLink(updated)
+    }
+    setScraping(false)
+  }
 
   async function stash() {
     const res = await fetch(`/api/links/${link.id}`, {
@@ -78,6 +89,14 @@ function TriageCard({
       </div>
 
       <div className="shrink-0 flex items-center gap-1.5 mt-0.5 opacity-0 group-hover:opacity-100">
+        <button
+          onClick={rescrape}
+          disabled={scraping}
+          className="h-7 px-2 text-[0.6875rem] font-mono text-zinc-400 hover:text-zinc-700 disabled:opacity-40"
+          title="Re-scrape metadata"
+        >
+          {scraping ? '…' : '↺'}
+        </button>
         <button
           onClick={deleteSelf}
           className="size-7 flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded text-base leading-none"
