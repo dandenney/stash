@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { signOut } from '@/app/actions'
 import TokenManager from './TokenManager'
 import LinkQueue from './LinkQueue'
+import StashedList from './StashedList'
 
 export default async function DashboardPage() {
   const client = await createSessionClient()
@@ -57,39 +58,7 @@ export default async function DashboardPage() {
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
             Stashed
           </h2>
-          {stashed?.length === 0 ? (
-            <p className="text-sm text-gray-400">Nothing stashed yet.</p>
-          ) : (
-            <ul className="space-y-2">
-              {stashed?.map((link) => (
-                <li key={link.id} className="bg-white border border-gray-200 rounded-xl px-4 py-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm font-medium text-gray-900 hover:underline truncate block"
-                      >
-                        {link.title}
-                      </a>
-                      {link.notes && <p className="text-xs text-gray-500 mt-0.5">{link.notes}</p>}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {link.is_shared && (
-                        <span className="text-xs text-green-600 font-medium">Shared</span>
-                      )}
-                      {link.tags?.map((tag: string) => (
-                        <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          <StashedList links={stashed ?? []} />
         </section>
 
         <section>
