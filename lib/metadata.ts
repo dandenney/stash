@@ -69,7 +69,44 @@ async function scrapeXMetadata(url: string) {
   console.log('[metadata] X oEmbed data:', data)
 
   const $ = cheerio.load(data.html ?? '')
-  const tweetText = $('blockquote p').first().text().trim()
+  const p = $('blockquote p').first()
+  const tweetText = p.text().trim()
+
+  // If the tweet text is just a t.co URL (bare link share), follow it for the real title
+  const isBareLink = /^https?:\/\/t\.co\/\S+$/.test(tweetText)
+  if (isBareLink) {
+    const linkedUrl = p.find('a').first().attr('href') ?? tweetText
+    console.log('[metadata] X bare link, following:', linkedUrl)
+    try {
+      const linkedRes = await fetch(linkedUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Stash/1.0)' },
+        signal: AbortSignal.timeout(8000),
+      })
+      const linkedHtml = await linkedRes.text()
+      const $l = cheerio.load(linkedHtml)
+      const linkedTitle =
+        $l('meta[property="og:title"]').attr('content') ||
+        $l('meta[name="twitter:title"]').attr('content') ||
+        $l('title').text() ||
+        null
+      const linkedImage =
+        $l('meta[property="og:image"]').attr('content') ||
+        $l('meta[name="twitter:image"]').attr('content') ||
+        null
+      console.log('[metadata] X linked title:', linkedTitle)
+      if (linkedTitle) {
+        return {
+          title: linkedTitle.trim(),
+          description: null,
+          image: linkedImage?.trim() ?? null,
+          site_name: 'X',
+          author: data.author_name ?? null,
+        }
+      }
+    } catch (e) {
+      console.error('[metadata] X linked page fetch failed:', e)
+    }
+  }
 
   return {
     title: tweetText || url,
