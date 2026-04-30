@@ -105,7 +105,7 @@ async function scrapeXMetadata(url: string) {
         const cleanTweet = tweetText.replace(/https?:\/\/t\.co\/\S+/g, '').replace(/\s+/g, ' ').trim()
         return {
           title: linkedTitle.trim(),
-          description: linkedDescription?.trim() ?? cleanTweet || null,
+          description: (linkedDescription?.trim() ?? cleanTweet) || null,
           image: linkedImage?.trim() ?? null,
           site_name: 'X',
           author: data.author_name ?? null,
