@@ -24,7 +24,7 @@ export default async function DashboardPage() {
       .eq('user_id', user.id)
       .eq('status', 'stashed')
       .order('created_at', { ascending: false })
-      .limit(20),
+      .limit(50),
     supabase
       .from('api_tokens')
       .select('id, label, token, created_at')
@@ -32,42 +32,72 @@ export default async function DashboardPage() {
       .order('created_at', { ascending: false }),
   ])
 
+  const scoreLinks = score ?? []
+  const stashedLinks = stashed ?? []
+  const apiTokens = tokens ?? []
+
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">stash</h1>
+    <div className="flex flex-col h-dvh bg-zinc-50 isolate">
+
+      <header className="shrink-0 flex items-center justify-between px-5 py-3 bg-white border-b border-zinc-200">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-semibold text-zinc-900 tracking-tight">stash</span>
+          {scoreLinks.length > 0 && (
+            <span className="text-[0.6875rem] font-mono text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded tabular-nums">
+              {scoreLinks.length} in the score
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-500">{user.email}</span>
+          <span className="text-xs text-zinc-400 font-mono">{user.email}</span>
           <form action={signOut}>
-            <button type="submit" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-              Sign out
+            <button type="submit" className="text-xs text-zinc-400 hover:text-zinc-700">
+              sign out
             </button>
           </form>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-10">
-        <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-            The Score ({score?.length ?? 0})
-          </h2>
-          <LinkQueue links={score ?? []} />
-        </section>
+      <div className="flex flex-1 min-h-0">
+        {/* Stashed panel */}
+        <div className="flex flex-col w-2/5 border-r border-zinc-200 min-h-0 bg-white">
+          <div className="shrink-0 px-4 py-2.5 border-b border-zinc-100 flex items-center justify-between">
+            <h2 className="text-[0.6875rem] font-mono font-medium text-zinc-500 uppercase tracking-widest">
+              <span className="text-orange-500">// </span>stashed
+            </h2>
+            <span className="text-[0.6875rem] font-mono text-zinc-400 tabular-nums">
+              {stashedLinks.length}
+            </span>
+          </div>
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <StashedList links={stashedLinks} />
+          </div>
+          <details className="shrink-0 border-t border-zinc-200">
+            <summary className="px-4 py-2 text-[0.6875rem] font-mono font-medium text-zinc-400 uppercase tracking-widest cursor-pointer hover:text-zinc-600 list-none flex items-center gap-2">
+              <span className="text-orange-500">// </span>api tokens
+            </summary>
+            <div className="px-4 pb-4 pt-2">
+              <TokenManager tokens={apiTokens} userId={user.id} />
+            </div>
+          </details>
+        </div>
 
-        <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-            Stashed
-          </h2>
-          <StashedList links={stashed ?? []} />
-        </section>
-
-        <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-            API Tokens
-          </h2>
-          <TokenManager tokens={tokens ?? []} userId={user.id} />
-        </section>
+        {/* Score panel */}
+        <div className="flex flex-col w-3/5 min-h-0 bg-white">
+          <div className="shrink-0 px-4 py-2.5 border-b border-zinc-100 flex items-center justify-between">
+            <h2 className="text-[0.6875rem] font-mono font-medium text-zinc-500 uppercase tracking-widest">
+              <span className="text-orange-500">// </span>the score
+            </h2>
+            <span className="text-[0.6875rem] font-mono text-zinc-400 tabular-nums">
+              {scoreLinks.length}
+            </span>
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 py-1">
+            <LinkQueue links={scoreLinks} />
+          </div>
+        </div>
       </div>
-    </main>
+
+    </div>
   )
 }

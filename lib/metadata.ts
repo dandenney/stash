@@ -70,15 +70,18 @@ async function scrapeXMetadata(url: string) {
 
   const $ = cheerio.load(data.html ?? '')
   const p = $('blockquote p').first()
+
+  // Profile oEmbed (and other non-tweet pages) have no blockquote p
+  if (!p.length) return null
+
   const tweetText = p.text().trim()
 
-  // If the tweet text is just a t.co URL (bare link share), follow it for the real title
-  const isBareLink = /^https?:\/\/t\.co\/\S+$/.test(tweetText)
-  if (isBareLink) {
-    const linkedUrl = p.find('a').first().attr('href') ?? tweetText
-    console.log('[metadata] X bare link, following:', linkedUrl)
+  // Follow any t.co link in the tweet to get the real article title
+  const tcoHref = p.find('a[href^="https://t.co/"]').first().attr('href')
+  if (tcoHref) {
+    console.log('[metadata] X following t.co link:', tcoHref)
     try {
-      const linkedRes = await fetch(linkedUrl, {
+      const linkedRes = await fetch(tcoHref, {
         headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Stash/1.0)' },
         signal: AbortSignal.timeout(8000),
       })
@@ -89,15 +92,20 @@ async function scrapeXMetadata(url: string) {
         $l('meta[name="twitter:title"]').attr('content') ||
         $l('title').text() ||
         null
+      const linkedDescription =
+        $l('meta[property="og:description"]').attr('content') ||
+        $l('meta[name="description"]').attr('content') ||
+        null
       const linkedImage =
         $l('meta[property="og:image"]').attr('content') ||
         $l('meta[name="twitter:image"]').attr('content') ||
         null
       console.log('[metadata] X linked title:', linkedTitle)
       if (linkedTitle) {
+        const cleanTweet = tweetText.replace(/https?:\/\/t\.co\/\S+/g, '').replace(/\s+/g, ' ').trim()
         return {
           title: linkedTitle.trim(),
-          description: null,
+          description: linkedDescription?.trim() ?? cleanTweet || null,
           image: linkedImage?.trim() ?? null,
           site_name: 'X',
           author: data.author_name ?? null,
