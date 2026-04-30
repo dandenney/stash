@@ -28,7 +28,7 @@ function TriageCard({
     const res = await fetch(`/api/links/${link.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'stashed' }),
+      body: JSON.stringify({ status: 'stashed', is_shared: true }),
     })
     if (res.ok) onRemove(link.id)
   }
