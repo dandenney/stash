@@ -58,71 +58,139 @@ async function scrapeYouTubeMetadata(url: string) {
   }
 }
 
+async function fetchLinkedMeta(targetUrl: string, tweetText: string, author: string | null) {
+  const res = await fetch(targetUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Stash/1.0)' },
+    signal: AbortSignal.timeout(8000),
+  })
+  const html = await res.text()
+  const $l = cheerio.load(html)
+  const title =
+    $l('meta[property="og:title"]').attr('content') ||
+    $l('meta[name="twitter:title"]').attr('content') ||
+    $l('title').text() ||
+    null
+  if (!title) return null
+  const description =
+    $l('meta[property="og:description"]').attr('content') ||
+    $l('meta[name="description"]').attr('content') ||
+    null
+  const image =
+    $l('meta[property="og:image"]').attr('content') ||
+    $l('meta[name="twitter:image"]').attr('content') ||
+    null
+  return {
+    title: title.trim(),
+    description: (description?.trim() ?? tweetText) || null,
+    image: image?.trim() ?? null,
+    site_name: 'X',
+    author,
+  }
+}
+
 async function scrapeXMetadata(url: string) {
-  const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}`
-  console.log('[metadata] X oEmbed request:', oembedUrl)
-  const res = await fetch(oembedUrl, { signal: AbortSignal.timeout(8000) })
-  console.log('[metadata] X oEmbed status:', res.status)
-  if (!res.ok) return null
+  // Only tweet status URLs work with the APIs below
+  const match = url.match(/(?:x\.com|twitter\.com)\/([^/?#]+)\/status\/(\d+)/)
+  if (!match) return null
 
-  const data = await res.json()
-  console.log('[metadata] X oEmbed data:', data)
+  const [, username, statusId] = match
 
-  const $ = cheerio.load(data.html ?? '')
-  const p = $('blockquote p').first()
+  // fxtwitter API handles X Articles, tweets with links, and plain tweets
+  console.log('[metadata] X fxtwitter API:', username, statusId)
+  try {
+    const res = await fetch(`https://api.fxtwitter.com/${username}/status/${statusId}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Stash/1.0)' },
+      signal: AbortSignal.timeout(8000),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      const tweet = data.tweet
+      if (tweet) {
+        const author: string | null = tweet.author?.name ?? null
 
-  // Profile oEmbed (and other non-tweet pages) have no blockquote p
-  if (!p.length) return null
+        // X Article (long-form post hosted on x.com/i/article/...)
+        if (tweet.article) {
+          return {
+            title: tweet.article.title ?? url,
+            description: tweet.article.preview_text ?? null,
+            image: tweet.article.cover_media?.media_info?.original_img_url ?? null,
+            site_name: 'X',
+            author,
+          }
+        }
 
-  const tweetText = p.text().trim()
+        // Tweet with external links — follow the first non-X expanded URL
+        const externalLinks: Array<{ expanded_url?: string }> = (tweet.links ?? []).filter(
+          (l: { expanded_url?: string }) => {
+            const u = l.expanded_url ?? ''
+            return u && !u.includes('//x.com') && !u.includes('//twitter.com')
+          }
+        )
+        if (externalLinks.length > 0) {
+          const targetUrl = externalLinks[0].expanded_url!
+          console.log('[metadata] X following expanded link:', targetUrl)
+          try {
+            const cleanTweet = (tweet.text ?? '').replace(/https?:\/\/t\.co\/\S+/g, '').replace(/\s+/g, ' ').trim()
+            const linked = await fetchLinkedMeta(targetUrl, cleanTweet, author)
+            if (linked) return linked
+          } catch (e) {
+            console.error('[metadata] X linked page fetch failed:', e)
+          }
+        }
 
-  // Follow any t.co link in the tweet to get the real article title
-  const tcoHref = p.find('a[href^="https://t.co/"]').first().attr('href')
-  if (tcoHref) {
-    console.log('[metadata] X following t.co link:', tcoHref)
-    try {
-      const linkedRes = await fetch(tcoHref, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Stash/1.0)' },
-        signal: AbortSignal.timeout(8000),
-      })
-      const linkedHtml = await linkedRes.text()
-      const $l = cheerio.load(linkedHtml)
-      const linkedTitle =
-        $l('meta[property="og:title"]').attr('content') ||
-        $l('meta[name="twitter:title"]').attr('content') ||
-        $l('title').text() ||
-        null
-      const linkedDescription =
-        $l('meta[property="og:description"]').attr('content') ||
-        $l('meta[name="description"]').attr('content') ||
-        null
-      const linkedImage =
-        $l('meta[property="og:image"]').attr('content') ||
-        $l('meta[name="twitter:image"]').attr('content') ||
-        null
-      console.log('[metadata] X linked title:', linkedTitle)
-      if (linkedTitle) {
-        const cleanTweet = tweetText.replace(/https?:\/\/t\.co\/\S+/g, '').replace(/\s+/g, ' ').trim()
+        // Plain tweet — use cleaned text
+        const cleanText = (tweet.text ?? '').replace(/https?:\/\/t\.co\/\S+/g, '').replace(/\s+/g, ' ').trim()
+        const tweetImage: string | null = tweet.media?.photos?.[0]?.url ?? tweet.media?.all?.[0]?.url ?? null
         return {
-          title: linkedTitle.trim(),
-          description: (linkedDescription?.trim() ?? cleanTweet) || null,
-          image: linkedImage?.trim() ?? null,
+          title: cleanText || url,
+          description: null,
+          image: tweetImage,
+          site_name: 'X',
+          author,
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[metadata] fxtwitter API failed:', e)
+  }
+
+  // Fallback: oEmbed (handles regular tweets when fxtwitter is unavailable)
+  console.log('[metadata] X falling back to oEmbed')
+  try {
+    const oembedRes = await fetch(
+      `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}`,
+      { signal: AbortSignal.timeout(8000) }
+    )
+    if (oembedRes.ok) {
+      const data = await oembedRes.json()
+      const $ = cheerio.load(data.html ?? '')
+      const p = $('blockquote p').first()
+      if (p.length) {
+        const tweetText = p.text().trim()
+        const tcoHref = p.find('a[href^="https://t.co/"]').first().attr('href')
+        if (tcoHref) {
+          try {
+            const cleanTweet = tweetText.replace(/https?:\/\/t\.co\/\S+/g, '').replace(/\s+/g, ' ').trim()
+            const linked = await fetchLinkedMeta(tcoHref, cleanTweet, data.author_name ?? null)
+            if (linked) return linked
+          } catch (e) {
+            console.error('[metadata] X oEmbed link fetch failed:', e)
+          }
+        }
+        return {
+          title: tweetText || url,
+          description: null,
+          image: data.thumbnail_url ?? null,
           site_name: 'X',
           author: data.author_name ?? null,
         }
       }
-    } catch (e) {
-      console.error('[metadata] X linked page fetch failed:', e)
     }
+  } catch (e) {
+    console.error('[metadata] X oEmbed failed:', e)
   }
 
-  return {
-    title: tweetText || url,
-    description: null,
-    image: data.thumbnail_url ?? null,
-    site_name: 'X',
-    author: data.author_name ?? null,
-  }
+  return null
 }
 
 export async function scrapeMetadata(url: string) {
