@@ -96,7 +96,7 @@ export default function StashedList({ links: initial }: { links: Link[] }) {
                 )}
               </div>
               {(link.site_name || link.media_type === 'video') && (
-                <p className="text-[0.625rem] font-mono text-zinc-400 mt-0.5 truncate">
+                <p className="text-[0.625rem] font-mono text-zinc-600 mt-0.5 truncate">
                   {[link.site_name, link.media_type === 'video' ? '▶ video' : null].filter(Boolean).join(' · ')}
                 </p>
               )}
@@ -104,12 +104,12 @@ export default function StashedList({ links: initial }: { links: Link[] }) {
                 <p className="text-[0.6875rem] text-zinc-600 mt-0.5 truncate">{link.notes}</p>
               )}
               {link.description && (
-                <p className="text-[0.6875rem] text-zinc-400 italic mt-0.5 truncate">{link.description}</p>
+                <p className="text-[0.6875rem] text-zinc-600 mt-0.5 truncate">{link.description}</p>
               )}
               {link.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1">
                   {link.tags.map((tag) => (
-                    <span key={tag} className="text-[0.625rem] bg-zinc-100 text-zinc-400 px-1 py-px rounded">
+                    <span key={tag} className="text-[0.625rem] bg-zinc-100 text-zinc-700 px-1 py-px rounded">
                       {tag}
                     </span>
                   ))}

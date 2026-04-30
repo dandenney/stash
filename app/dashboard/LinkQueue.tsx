@@ -60,28 +60,28 @@ function TriageCard({
           {link.title}
         </a>
         {link.description && (
-          <p className="text-[0.6875rem] text-zinc-400 italic truncate mt-0.5">
+          <p className="text-[0.6875rem] text-zinc-600 truncate mt-0.5">
             {link.description}
           </p>
         )}
         <div className="flex items-center gap-2 mt-1">
           {(link.site_name || link.author) && (
-            <span className="text-[0.625rem] font-mono text-zinc-400 truncate">
+            <span className="text-[0.625rem] font-mono text-zinc-600 truncate">
               {[link.site_name, link.author].filter(Boolean).join(' · ')}
             </span>
           )}
           {link.media_type === 'video' && !link.image && (
-            <span className="text-[0.625rem] text-zinc-400 shrink-0">▶ video</span>
+            <span className="text-[0.625rem] text-zinc-600 shrink-0">▶ video</span>
           )}
           {link.tags.length > 0 && (
             <div className="flex gap-1 overflow-hidden">
               {link.tags.slice(0, 2).map((tag) => (
-                <span key={tag} className="text-[0.625rem] bg-zinc-100 text-zinc-500 px-1.5 py-px rounded shrink-0">
+                <span key={tag} className="text-[0.625rem] bg-zinc-100 text-zinc-700 px-1.5 py-px rounded shrink-0">
                   {tag}
                 </span>
               ))}
               {link.tags.length > 2 && (
-                <span className="text-[0.625rem] text-zinc-400 shrink-0">+{link.tags.length - 2}</span>
+                <span className="text-[0.625rem] text-zinc-600 shrink-0">+{link.tags.length - 2}</span>
               )}
             </div>
           )}
