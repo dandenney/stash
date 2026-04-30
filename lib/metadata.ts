@@ -22,7 +22,77 @@ export function isVideoUrl(url: string): boolean {
   }
 }
 
+function isYouTubeUrl(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname.replace('www.', '')
+    return hostname === 'youtube.com' || hostname === 'youtu.be'
+  } catch {
+    return false
+  }
+}
+
+function isXUrl(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname.replace('www.', '')
+    return hostname === 'x.com' || hostname === 'twitter.com'
+  } catch {
+    return false
+  }
+}
+
+async function scrapeYouTubeMetadata(url: string) {
+  const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`
+  console.log('[metadata] YouTube oEmbed request:', oembedUrl)
+  const res = await fetch(oembedUrl, { signal: AbortSignal.timeout(8000) })
+  console.log('[metadata] YouTube oEmbed status:', res.status)
+  if (!res.ok) return null
+
+  const data = await res.json()
+  console.log('[metadata] YouTube oEmbed data:', data)
+  return {
+    title: data.title ?? url,
+    description: null,
+    image: data.thumbnail_url ?? null,
+    site_name: 'YouTube',
+    author: data.author_name ?? null,
+  }
+}
+
+async function scrapeXMetadata(url: string) {
+  const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}`
+  console.log('[metadata] X oEmbed request:', oembedUrl)
+  const res = await fetch(oembedUrl, { signal: AbortSignal.timeout(8000) })
+  console.log('[metadata] X oEmbed status:', res.status)
+  if (!res.ok) return null
+
+  const data = await res.json()
+  console.log('[metadata] X oEmbed data:', data)
+
+  const $ = cheerio.load(data.html ?? '')
+  const tweetText = $('blockquote p').first().text().trim()
+
+  return {
+    title: tweetText || url,
+    description: null,
+    image: data.thumbnail_url ?? null,
+    site_name: 'X',
+    author: data.author_name ?? null,
+  }
+}
+
 export async function scrapeMetadata(url: string) {
+  console.log('[metadata] scrapeMetadata:', url)
+
+  if (isYouTubeUrl(url)) {
+    const data = await scrapeYouTubeMetadata(url)
+    if (data) return data
+  }
+
+  if (isXUrl(url)) {
+    const data = await scrapeXMetadata(url)
+    if (data) return data
+  }
+
   const res = await fetch(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Stash/1.0)' },
     signal: AbortSignal.timeout(8000),
