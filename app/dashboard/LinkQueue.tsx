@@ -1,15 +1,19 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Link } from '@/lib/supabase'
 
 function TriageCard({
   link: initial,
-  onRemove,
+  exiting,
+  onStash,
+  onDelete,
 }: {
   link: Link
-  onRemove: (id: string) => void
+  exiting: boolean
+  onStash: (link: Link) => void
+  onDelete: (link: Link) => void
 }) {
   const [link, setLink] = useState(initial)
   const [scraping, setScraping] = useState(false)
@@ -24,22 +28,14 @@ function TriageCard({
     setScraping(false)
   }
 
-  async function stash() {
-    const res = await fetch(`/api/links/${link.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'stashed', is_shared: true }),
-    })
-    if (res.ok) onRemove(link.id)
-  }
-
-  async function deleteSelf() {
-    const res = await fetch(`/api/links/${link.id}`, { method: 'DELETE' })
-    if (res.ok) onRemove(link.id)
-  }
-
   return (
-    <li className="group flex items-start gap-3 py-3 border-b border-zinc-100 last:border-0">
+    <li
+      className={[
+        'group flex items-start gap-3 py-3 border-b border-zinc-100 last:border-0',
+        'transition-all duration-200',
+        exiting ? 'opacity-0 -translate-x-2 pointer-events-none' : '',
+      ].join(' ')}
+    >
       <div className="shrink-0 size-9 rounded bg-zinc-100 overflow-hidden mt-0.5">
         {link.image ? (
           <img src={link.image} alt="" className="size-full object-cover" />
@@ -98,7 +94,7 @@ function TriageCard({
           {scraping ? '…' : '↺'}
         </button>
         <button
-          onClick={deleteSelf}
+          onClick={() => onDelete(link)}
           className="size-7 flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded text-base leading-none"
           title="Delete"
         >
@@ -108,7 +104,7 @@ function TriageCard({
           </span>
         </button>
         <button
-          onClick={stash}
+          onClick={() => onStash(link)}
           className="h-7 px-2.5 text-[0.6875rem] font-medium bg-orange-400 text-zinc-900 hover:bg-orange-500 rounded focus-visible:outline-2 focus-visible:outline-orange-500 focus-visible:outline-offset-2"
         >
           Stash
@@ -120,15 +116,57 @@ function TriageCard({
 
 export default function LinkQueue({ links: initial }: { links: Link[] }) {
   const [links, setLinks] = useState(initial)
+  const [exiting, setExiting] = useState<Set<string>>(new Set())
   const router = useRouter()
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     setLinks(initial)
   }, [initial])
 
-  function remove(id: string) {
-    setLinks((prev) => prev.filter((l) => l.id !== id))
-    router.refresh()
+  function scheduleRefresh() {
+    if (refreshTimer.current) clearTimeout(refreshTimer.current)
+    refreshTimer.current = setTimeout(() => router.refresh(), 1500)
+  }
+
+  function startExit(link: Link, apiCall: () => Promise<Response>) {
+    setExiting(prev => new Set([...prev, link.id]))
+
+    const timer = setTimeout(() => {
+      setLinks(prev => prev.filter(l => l.id !== link.id))
+      setExiting(prev => { const s = new Set(prev); s.delete(link.id); return s })
+    }, 200)
+
+    apiCall().then(res => {
+      if (!res.ok) {
+        clearTimeout(timer)
+        setExiting(prev => { const s = new Set(prev); s.delete(link.id); return s })
+        setLinks(prev => {
+          if (prev.some(l => l.id === link.id)) return prev
+          return [...prev, link].sort((a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          )
+        })
+      } else {
+        scheduleRefresh()
+      }
+    })
+  }
+
+  function handleStash(link: Link) {
+    startExit(link, () =>
+      fetch(`/api/links/${link.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'stashed', is_shared: true }),
+      })
+    )
+  }
+
+  function handleDelete(link: Link) {
+    startExit(link, () =>
+      fetch(`/api/links/${link.id}`, { method: 'DELETE' })
+    )
   }
 
   if (links.length === 0) {
@@ -142,7 +180,13 @@ export default function LinkQueue({ links: initial }: { links: Link[] }) {
   return (
     <ul role="list">
       {links.map((link) => (
-        <TriageCard key={link.id} link={link} onRemove={remove} />
+        <TriageCard
+          key={link.id}
+          link={link}
+          exiting={exiting.has(link.id)}
+          onStash={handleStash}
+          onDelete={handleDelete}
+        />
       ))}
     </ul>
   )
