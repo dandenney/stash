@@ -208,7 +208,7 @@ export async function scrapeMetadata(url: string) {
 
   const res = await fetch(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Stash/1.0)' },
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(5000),
   })
 
   const html = await res.text()

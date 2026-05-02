@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase'
 import { scrapeMetadata, getMediaType } from '@/lib/metadata'
 import { generateTags } from '@/lib/tagging'
 
+export const maxDuration = 30
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
