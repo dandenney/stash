@@ -87,31 +87,65 @@ export default function DashboardColumns({
 
   return (
     <div className="flex flex-col h-dvh bg-zinc-50 isolate">
-      <header className="shrink-0 flex items-center justify-between px-5 py-3 bg-white border-b border-zinc-200">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-zinc-900 tracking-tight">stash</span>
-          {scoreLinks.length > 0 && (
-            <span className="text-[0.6875rem] font-mono text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded tabular-nums">
-              {scoreLinks.length} in the score
-            </span>
-          )}
+      <div data-uidotsh-pick="Header style" className="contents">
+
+        <div data-uidotsh-option="White (current)" className="contents">
+          <header className="shrink-0 flex items-center justify-between px-5 py-3 bg-white border-b border-zinc-200">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-zinc-900 tracking-tight">stash</span>
+              {scoreLinks.length > 0 && (
+                <span className="text-[0.6875rem] font-mono text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded tabular-nums">
+                  {scoreLinks.length} in the score
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-4">
+              <button onClick={toggle} title={inverted ? 'Default layout' : 'Flip layout'} className="text-sm text-zinc-400 hover:text-zinc-700 leading-none">⇄</button>
+              <span className="text-xs text-zinc-400 font-mono">{userEmail}</span>
+              <form action={signOut}><button type="submit" className="text-xs text-zinc-400 hover:text-zinc-700">sign out</button></form>
+            </div>
+          </header>
         </div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={toggle}
-            title={inverted ? 'Default layout' : 'Flip layout'}
-            className="text-sm text-zinc-400 hover:text-zinc-700 leading-none"
-          >
-            ⇄
-          </button>
-          <span className="text-xs text-zinc-400 font-mono">{userEmail}</span>
-          <form action={signOut}>
-            <button type="submit" className="text-xs text-zinc-400 hover:text-zinc-700">
-              sign out
-            </button>
-          </form>
+
+        <div data-uidotsh-option="Dark" className="contents" hidden>
+          <header className="shrink-0 flex items-center justify-between px-5 py-3 bg-zinc-900 border-b border-zinc-800">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-zinc-100 tracking-tight">stash</span>
+              {scoreLinks.length > 0 && (
+                <span className="text-[0.6875rem] font-mono text-orange-400 bg-orange-400/10 border border-orange-400/20 px-2 py-0.5 rounded tabular-nums">
+                  {scoreLinks.length} in the score
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-4">
+              <button onClick={toggle} title={inverted ? 'Default layout' : 'Flip layout'} className="text-sm text-zinc-500 hover:text-zinc-200 leading-none">⇄</button>
+              <span className="text-xs text-zinc-600 font-mono">{userEmail}</span>
+              <form action={signOut}><button type="submit" className="text-xs text-zinc-500 hover:text-zinc-200">sign out</button></form>
+            </div>
+          </header>
         </div>
-      </header>
+
+        <div data-uidotsh-option="Branded" className="contents" hidden>
+          <header className="shrink-0 flex items-center justify-between px-5 py-3 bg-zinc-950 border-b border-zinc-900">
+            <div className="flex items-center gap-3">
+              <span className="text-[0.9375rem] font-semibold tracking-tight">
+                <span className="text-orange-400">// </span><span className="text-zinc-100">stash</span>
+              </span>
+              {scoreLinks.length > 0 && (
+                <span className="text-[0.6875rem] font-mono text-orange-300 bg-orange-400/10 border border-orange-400/25 px-2 py-0.5 rounded tabular-nums">
+                  {scoreLinks.length} in the score
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-4">
+              <button onClick={toggle} title={inverted ? 'Default layout' : 'Flip layout'} className="text-sm text-zinc-600 hover:text-zinc-200 leading-none">⇄</button>
+              <span className="text-xs text-zinc-600 font-mono">{userEmail}</span>
+              <form action={signOut}><button type="submit" className="text-xs text-zinc-600 hover:text-zinc-200">sign out</button></form>
+            </div>
+          </header>
+        </div>
+
+      </div>
 
       <div className="flex flex-1 min-h-0">
         {inverted ? (
