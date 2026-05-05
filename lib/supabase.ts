@@ -48,6 +48,16 @@ export interface Link {
   created_at: string
 }
 
+export interface Highlight {
+  id: string
+  user_id: string
+  url: string
+  title: string
+  text: string
+  note: string | null
+  created_at: string
+}
+
 export interface ApiToken {
   id: string
   user_id?: string
