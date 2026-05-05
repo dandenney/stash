@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import NextLink from 'next/link'
 import { signOut } from '@/app/actions'
 import type { Link, ApiToken } from '@/lib/supabase'
 import TokenManager from './TokenManager'
@@ -100,6 +101,7 @@ export default function DashboardColumns({
               )}
             </div>
             <div className="flex items-center gap-4">
+              <NextLink href="/dashboard/highlights" className="text-xs text-zinc-400 hover:text-zinc-700 font-mono">highlights</NextLink>
               <button onClick={toggle} title={inverted ? 'Default layout' : 'Flip layout'} className="text-sm text-zinc-400 hover:text-zinc-700 leading-none">⇄</button>
               <span className="text-xs text-zinc-400 font-mono">{userEmail}</span>
               <form action={signOut}><button type="submit" className="text-xs text-zinc-400 hover:text-zinc-700">sign out</button></form>
